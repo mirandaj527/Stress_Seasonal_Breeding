@@ -35,7 +35,7 @@ const double pAtt     = 0.5;     // probability that predator attacks if present
 const double alpha    = 1.0;     // parameter controlling effect of hormone level on pKill
 const double beta_b   = 1.5;     // parameter controlling effect of hormone level on reproductive rate
 const double kappa    = 1.5;     // Parameter controlling affect of damage on mortality
-const double mu       = 0.002;   // background mortality (independent of hormone level and predation risk)
+const double mu       = 0.1;   // background mortality (independent of hormone level and predation risk)
 const double rho      = 10.0;    // Fixed rate of repair
 const double h0       = 220.0;   // Reference hormone level
 const double omega    = 0.001;   // Effect of deviations from h0 on damage build-up
@@ -43,7 +43,7 @@ const double gamma_g  = 1.5;     // Effect of damage on reproductive output
 const int maxI        = 10000; // maximum number of iterations
 const int maxT        = 50;     // maximum number of time steps since last saw predator
 const int maxD        = 100;    // Number of discrete damage levels?
-const int maxH        = 1000;    // maximum hormone level
+const int maxH        = 100;    // maximum hormone level
 const int maxS        = 5;       // Length of the breeding cycle
 const int skip        = 1;       // interval between print-outs
 
