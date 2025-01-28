@@ -320,9 +320,10 @@ void OptDec()
 void ReplaceFit()
 {
   int t,d,h,s;
-  double fitdiff;
+  double maxfitdiff, totfitdiff;
 
-  fitdiff = 0.0;
+  maxfitdiff = 0.0;
+  totfitdiff = 0.0;
 
   for (t=1;t<maxT;t++)
   {
@@ -332,14 +333,13 @@ void ReplaceFit()
       {
         for (s=0;s<maxS;s++)
         {
-          fitdiff = fitdiff + abs(Wnext[t][d][h][s]-W[t][d][h][s]);
+          totfitdiff = totfitdiff + abs(Wnext[t][d][h][s]-W[t][d][h][s]);
+	  maxfitdiff = max(maxfitdiff, abs(Wnext[t][d][h][s]-W[t][d][h][s]));
           Wnext[t][d][h][s] = W[t][d][h][s];
         }
       }
     }
   }
-
-  totfitdiff = fitdiff;
 
 }
 
@@ -412,13 +412,13 @@ int main()
         Reproduction();
         Damage();
 
-        cout << "i" << "\t" << "totfitdiff" << endl;
+        cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << endl;
         for (i=1;i<=maxI;i++)
           {
           OptDec();
           ReplaceFit();
 
-          if (totfitdiff < 0.000001) 
+          if (maxfitdiff < 0.01) 
             {
                cout << "Converged at iteration: " << i << ", totfitdiff: " << totfitdiff << endl;
                break; // strategy has converged on optimal solution, so exit loop
@@ -430,7 +430,7 @@ int main()
 
  		  if (i%skip==0)
             {
-              cout << i << "\t" << totfitdiff << endl; // show fitness difference every 'skip' generations
+              cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << endl; // show fitness difference every 'skip' generations
             }
           }
 
