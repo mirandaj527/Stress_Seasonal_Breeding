@@ -29,8 +29,8 @@
 using namespace std;
 
 const int seed        = time(0); // pseudo-random seed
-const double lambdaA  = 0.005;   // probability that predator arrives
-const double lambdaL  = 0.095;   // probability that predator leaves
+const double lambdaA  = 0.05;   // probability that predator arrives
+const double lambdaL  = 0.05;   // probability that predator leaves
 const double pAtt     = 0.5;     // probability that predator attacks if present
 const double alpha    = 1.0;     // parameter controlling effect of hormone level on pKill
 const double beta_b   = 1.5;     // parameter controlling effect of hormone level on reproductive rate
@@ -42,7 +42,7 @@ const double omega    = 0.001;   // Effect of deviations from h0 on damage build
 const double gamma_g  = 1.5;     // Effect of damage on reproductive output
 const int maxI        = 1000000; // maximum number of iterations
 const int maxT        = 50;     // maximum number of time steps since last saw predator
-const int maxD        = 1000;    // Number of discrete damage levels?
+const int maxD        = 100;    // Number of discrete damage levels?
 const int maxH        = 1000;    // maximum hormone level
 const int maxS        = 5;       // Length of the breeding cycle
 const int skip        = 1;       // interval between print-outs
@@ -271,10 +271,14 @@ void OptDec()
             ddif = damage_new[d][h] - static_cast<double>(d1); // calculate difference 
 
             // calculate fitness from W' as a function of t, d, s, h
-            fitness = 
-                (1.0 - ddif) * Wnext[min(maxT - 1, t + 1)][d1][h][(s + 1) % maxS] // deterministic rounding
-                + 
-                ddif * Wnext[min(maxT - 1, t + 1)][d2][h][(s + 1) % maxS];
+        //    fitness = 
+        //        (1.0 - ddif) * Wnext[min(maxT - 1, t + 1)][d1][h][(s + 1) % maxS] // deterministic rounding
+        //        + 
+        //        ddif * Wnext[min(maxT - 1, t + 1)][d2][h][(s + 1) % maxS];
+	      fitness = 
+                  (1.0 - ddif) * Wnext[min(maxT - 1, t + 1)][d1][h][s] // deterministic rounding
+                  + 
+                  ddif * Wnext[min(maxT - 1, t + 1)][d2][h][s];	
 
         // compare with current optimal fitness for this specific combination of t,d,s
           if (fitness>Wopt[t][d][s])                 
