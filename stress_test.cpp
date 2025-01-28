@@ -40,7 +40,7 @@ const double rho      = 10.0;    // Fixed rate of repair
 const double h0       = 220.0;   // Reference hormone level
 const double omega    = 0.001;   // Effect of deviations from h0 on damage build-up
 const double gamma_g  = 1.5;     // Effect of damage on reproductive output
-const int maxI        = 1000000; // maximum number of iterations
+const int maxI        = 10000; // maximum number of iterations
 const int maxT        = 50;     // maximum number of time steps since last saw predator
 const int maxD        = 100;    // Number of discrete damage levels?
 const int maxH        = 1000;    // maximum hormone level
@@ -131,6 +131,7 @@ vector<                                   // vector 1: maxD
 vector<double> background_mortality(maxD, 0.0);
 
 double totfitdiff;                        // fitness difference between optimal strategy in successive iterations
+double maxfitdiff;
 
 int i;     // iteration
 
@@ -320,7 +321,6 @@ void OptDec()
 void ReplaceFit()
 {
   int t,d,h,s;
-  double maxfitdiff, totfitdiff;
 
   maxfitdiff = 0.0;
   totfitdiff = 0.0;
@@ -420,7 +420,7 @@ int main()
 
           if (maxfitdiff < 0.01) 
             {
-               cout << "Converged at iteration: " << i << ", totfitdiff: " << totfitdiff << endl;
+               cout << "Converged at iteration: " << i << ", maxfitdiff: " << maxfitdiff << endl;
                break; // strategy has converged on optimal solution, so exit loop
             }
           if (i==maxI) 
