@@ -285,14 +285,11 @@ void OptDec()
             ddif = damage_new[d][h] - static_cast<double>(d1); // calculate difference 
 
             // calculate fitness from W' as a function of t, d, s, h
-        //    fitness = 
-        //        (1.0 - ddif) * Wnext[min(maxT - 1, t + 1)][d1][h][(s + 1) % maxS] // deterministic rounding
-        //        + 
-        //        ddif * Wnext[min(maxT - 1, t + 1)][d2][h][(s + 1) % maxS];
-	      fitness = 
-                  (1.0 - ddif) * Wnext[min(maxT - 1, t + 1)][d1][h][s] // deterministic rounding
-                  + 
-                  ddif * Wnext[min(maxT - 1, t + 1)][d2][h][s];	
+            fitness = 
+                (1.0 - ddif) * Wnext[min(maxT - 1, t + 1)][d1][h][(s + 1) % maxS] // deterministic rounding
+                + 
+                ddif * Wnext[min(maxT - 1, t + 1)][d2][h][(s + 1) % maxS];
+	      
 
         // compare with current optimal fitness for this specific combination of t,d,s
           if (fitness>Wopt[t][d][s])                 
