@@ -470,7 +470,7 @@ int main()
 	   {
 	     c = 0;  
 	   }
-          if (c==100)
+          if (c==150)
 	   {
                cout << "Converged at iteration: " << i << ", maxfitdiff: " << maxfitdiff << endl;
                break; // strategy has converged on optimal solution, so exit loop
