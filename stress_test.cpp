@@ -378,7 +378,6 @@ void ReplaceHormone()
     }
   }
 
-}
 /* PRINT OUT OPTIMAL STRATEGY */
 void PrintStrat()
 {
