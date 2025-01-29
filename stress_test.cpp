@@ -148,7 +148,7 @@ double maxhormonediff;
 
 int i;     // iteration
 
-
+int c;     // count
 
 
 /* SPECIFY FINAL FITNESS */
@@ -429,6 +429,7 @@ void PrintParams()
 /* MAIN PROGRAM */
 int main()
 {
+	c = 0;
 
 		///////////////////////////////////////////////////////
 		outfile.str("");
@@ -445,7 +446,7 @@ int main()
         Reproduction();
         Damage();
 
-        cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << "\t" << "tothormonediff" << "\t" << "maxhormonediff" << endl;
+        cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << "\t" << "tothormonediff" << "\t" << "maxhormonediff" << "\t" << "c" << endl;
         for (i=1;i<=maxI;i++)
           {
           OptDec();
@@ -461,10 +462,22 @@ int main()
             { 
               outputfile << "*** DID NOT CONVERGE WITHIN " << i << " ITERATIONS ***" << endl;
             }
-
- 		  if (i%skip==0)
+	  if (maxfitdiff==0)
+	    {
+	      c++;  // Increment counter if maxfitdiff is still 0	    
+	    }
+	  else
+	   {
+	     c = 0;  
+	   }
+          if (c==15)
+	   {
+               cout << "Converged at iteration: " << i << ", maxfitdiff: " << maxfitdiff << endl;
+               break; // strategy has converged on optimal solution, so exit loop
+            }
+ 	  if (i%skip==0)
             {
-              cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << "\t" << tothormonediff << "\t" << maxhormonediff << endl; // show fitness difference every 'skip' generations
+              cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << "\t" << tothormonediff << "\t" << maxhormonediff << "\t" << c << endl; // show fitness difference every 'skip' generations
             }
           }
 
