@@ -38,8 +38,8 @@ const double kappa    = 0.0;     // Parameter controlling affect of damage on mo
 const double mu       = 0.1;   // background mortality (independent of hormone level and predation risk)
 const double rho      = 1.0;    // Fixed rate of repair
 const double h0       = 20.0;   // Reference hormone level
-const double omega    = 0.5;   // Effect of deviations from h0 on damage build-up
-const double gamma_g  = 1.0;     // Effect of damage on reproductive output
+const double omega    = 0.1;   // Effect of deviations from h0 on damage build-up
+const double gamma_g  = 0.1;     // Effect of damage on reproductive output
 const int maxI        = 100000; // maximum number of iterations
 const int maxT        = 25;     // maximum number of time steps since last saw predator
 const int maxD        = 100;    // Number of discrete damage levels?
@@ -212,7 +212,7 @@ void Reproduction()
     {
         // EDIT: Tweaked reproduction function. It still includes affect of hormone AND of damage
         // could look at only includign affect of damage & not hormone level (avoids paying cost of hormones twice)
-      repro[d][h][0] = exp( - (beta_b*(static_cast<double>(h)/static_cast<double>(maxH)) 
+      repro[d][h][0] = exp(-(beta_b*(static_cast<double>(h)/static_cast<double>(maxH)) 
                             + gamma_g*(static_cast<double>(d)/static_cast<double>(maxD))));
       for (s=1;s<maxS;s++) 
       {
@@ -451,7 +451,7 @@ int main()
           ReplaceFit();
 	  ReplaceHormone();
 
-          if (maxfitdiff < 0.1) 
+          if (maxfitdiff < 0.01) 
             {
                cout << "Converged at iteration: " << i << ", maxfitdiff: " << maxfitdiff << endl;
                break; // strategy has converged on optimal solution, so exit loop
