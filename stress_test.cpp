@@ -34,7 +34,7 @@ const double lambdaL  = 0.05;   // probability that predator leaves
 const double pAtt     = 0.5;     // probability that predator attacks if present
 const double alpha    = 0.1;     // parameter controlling effect of hormone level on pKill
 const double beta_b   = 0.0;     // parameter controlling effect of hormone level on reproductive rate
-const double kappa    = 0.5;     // Parameter controlling affect of damage on mortality
+const double kappa    = 0.0;     // Parameter controlling affect of damage on mortality
 const double mu       = 0.1;   // background mortality (independent of hormone level and predation risk)
 const double rho      = 1.0;    // Fixed rate of repair
 const double h0       = 20.0;   // Reference hormone level
@@ -249,7 +249,7 @@ void Mortality()
 
     for (d=0;d<maxD;d++)
     {
-        background_mortality[d] = min(1.0, (mu + (1.0 - exp(-pow(static_cast<double>(d)/static_cast<double>(maxD), kappa)))));
+        background_mortality[d] = min(1.0, (mu + (1.0 - exp(-kappa*(static_cast<double>(d)/static_cast<double>(maxD))))));
     }
 }
 
