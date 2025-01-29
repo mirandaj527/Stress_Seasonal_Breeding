@@ -195,7 +195,7 @@ void Death()
   for (h=0;h<maxH;h++)
   {
    // pKill[h] = 1.0 - pow(static_cast<double>(h)/static_cast<double>(maxH), alpha);
-      pKill[h] = 1.0 - (alpha * (static_cast<double>(h)/static_cast<double>(maxH)))
+      pKill[h] = 1.0 - (alpha * (static_cast<double>(h)/static_cast<double>(maxH)));
   }
 
 }
