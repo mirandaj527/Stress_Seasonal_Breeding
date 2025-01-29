@@ -371,7 +371,7 @@ void ReplaceHormone()
         for (s=0;s<maxS;s++)
         {
           tothormonediff = tothormonediff + abs(hormone_next[t][d][s]-hormone[t][d][s]);
-	  maxhormonediff = max(maxhormonediff, abs(hormone_next[t][d][s]-hormone[t][d][s]));
+	  maxhormonediff = max(maxhormonediff, static_cast<double>(abs(hormone_next[t][d][s]-hormone[t][d][s])));
           hormone_next[t][d][s] = hormone[t][d][s];
         }
       }
