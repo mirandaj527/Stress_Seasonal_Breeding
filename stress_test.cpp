@@ -32,7 +32,7 @@ const int seed        = time(0); // pseudo-random seed
 const double lambdaA  = 0.05;   // probability that predator arrives
 const double lambdaL  = 0.05;   // probability that predator leaves
 const double pAtt     = 0.5;     // probability that predator attacks if present
-const double alpha    = 0.0;     // parameter controlling effect of hormone level on pKill
+const double alpha    = 0.01;     // parameter controlling effect of hormone level on pKill
 const double beta_b   = 1.5;     // parameter controlling effect of hormone level on reproductive rate
 const double kappa    = 1.5;     // Parameter controlling affect of damage on mortality
 const double mu       = 0.1;   // background mortality (independent of hormone level and predation risk)
@@ -55,6 +55,17 @@ vector<                                   // vector 1: maxT
   vector<                                 // vector 2: maxD                                 
     vector<int>>>                         // vector 3: maxS
       hormone(maxT,                                        
+        vector<                                
+          vector<int>> 
+            (maxD, 
+              vector<int> (maxS, 0.0)     // initialising internal vector of length maxS to contain 0s
+            )
+);
+// storing optimal hormone level for next time step
+vector<                                   // vector 1: maxT
+  vector<                                 // vector 2: maxD                                 
+    vector<int>>>                         // vector 3: maxS
+      hormone_next(maxT,                                        
         vector<                                
           vector<int>> 
             (maxD, 
@@ -132,6 +143,8 @@ vector<double> background_mortality(maxD, 0.0);
 
 double totfitdiff;                        // fitness difference between optimal strategy in successive iterations
 double maxfitdiff;
+double tothormonediff;
+double maxhormonediff;
 
 int i;     // iteration
 
@@ -343,8 +356,29 @@ void ReplaceFit()
 
 }
 
+// comparing hormone values
+void ReplaceHormone()
+{
+  int t,d,s;
 
+  maxhormonediff = 0.0;
+  tothormonediff = 0.0;
 
+  for (t=1;t<maxT;t++)
+  {
+    for (d=0;d<maxD;d++)
+      {
+        for (s=0;s<maxS;s++)
+        {
+          tothormonediff = tothormonediff + abs(hormone_next[t][d][s]-hormone[t][d][s]);
+	  maxhormonediff = max(maxhormonediff, abs(hormone_next[t][d][s]-hormone[t][d][s]));
+          hormone_next[t][d][s] = hormone[t][d][s];
+        }
+      }
+    }
+  }
+
+}
 /* PRINT OUT OPTIMAL STRATEGY */
 void PrintStrat()
 {
@@ -412,11 +446,12 @@ int main()
         Reproduction();
         Damage();
 
-        cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << endl;
+        cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << "\t" << "tothormonediff" << "\t" << "maxhormonediff" << endl;
         for (i=1;i<=maxI;i++)
           {
           OptDec();
           ReplaceFit();
+	  ReplaceHormone();
 
           if (maxfitdiff < 0.01) 
             {
@@ -430,7 +465,7 @@ int main()
 
  		  if (i%skip==0)
             {
-              cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << endl; // show fitness difference every 'skip' generations
+              cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << "\t" << tothormonediff << "\t" << maxhormonediff << endl; // show fitness difference every 'skip' generations
             }
           }
 
