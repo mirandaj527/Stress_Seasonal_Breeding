@@ -32,10 +32,10 @@ const int seed        = time(0); // pseudo-random seed
 const double lambdaA  = 0.05;   // probability that predator arrives
 const double lambdaL  = 0.05;   // probability that predator leaves
 const double pAtt     = 0.5;     // probability that predator attacks if present
-const double alpha    = 0.01;     // parameter controlling effect of hormone level on pKill
-const double beta_b   = 0.0;     // parameter controlling effect of hormone level on reproductive rate
+const double alpha    = 0.0;     // parameter controlling effect of hormone level on pKill
+const double beta_b   = 0.5;     // parameter controlling effect of hormone level on reproductive rate
 const double kappa    = 0.5;     // Parameter controlling affect of damage on mortality
-const double mu       = 0.05;   // background mortality (independent of hormone level and predation risk)
+const double mu       = 0.1;   // background mortality (independent of hormone level and predation risk)
 const double rho      = 1.0;    // Fixed rate of repair
 const double h0       = 20.0;   // Reference hormone level
 const double omega    = 0.5;   // Effect of deviations from h0 on damage build-up
@@ -452,7 +452,7 @@ int main()
           ReplaceFit();
 	  ReplaceHormone();
 
-          if (maxfitdiff < 0.05) 
+          if (maxfitdiff < 0.1) 
             {
                cout << "Converged at iteration: " << i << ", maxfitdiff: " << maxfitdiff << endl;
                break; // strategy has converged on optimal solution, so exit loop
