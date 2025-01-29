@@ -40,12 +40,12 @@ const double rho      = 0.01;    // Fixed rate of repair
 const double h0       = 20.0;   // Reference hormone level
 const double omega    = 0.1;   // Effect of deviations from h0 on damage build-up
 const double gamma_g  = 1.5;     // Effect of damage on reproductive output
-const int maxI        = 10000; // maximum number of iterations
-const int maxT        = 50;     // maximum number of time steps since last saw predator
+const int maxI        = 100000; // maximum number of iterations
+const int maxT        = 25;     // maximum number of time steps since last saw predator
 const int maxD        = 100;    // Number of discrete damage levels?
 const int maxH        = 100;    // maximum hormone level
 const int maxS        = 5;       // Length of the breeding cycle
-const int skip        = 1;       // interval between print-outs
+const int skip        = 10;       // interval between print-outs
 
 ofstream outputfile; // output file
 stringstream outfile; // for naming output file
