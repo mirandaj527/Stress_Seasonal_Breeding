@@ -462,7 +462,7 @@ int main()
             { 
               outputfile << "*** DID NOT CONVERGE WITHIN " << i << " ITERATIONS ***" << endl;
             }
-	  if (maxfitdiff==0)
+	  if (maxhormonediff==0)
 	    {
 	      c++;  // Increment counter if maxfitdiff is still 0	    
 	    }
