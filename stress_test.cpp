@@ -45,7 +45,7 @@ const int maxT        = 25;     // maximum number of time steps since last saw p
 const int maxD        = 100;    // Number of discrete damage levels?
 const int maxH        = 100;    // maximum hormone level
 const int maxS        = 5;       // Length of the breeding cycle
-const int skip        = 10;       // interval between print-outs
+const int skip        = 1;       // interval between print-outs
 
 ofstream outputfile; // output file
 stringstream outfile; // for naming output file
@@ -194,7 +194,8 @@ void Death()
 
   for (h=0;h<maxH;h++)
   {
-    pKill[h] = 1.0 - pow(static_cast<double>(h)/static_cast<double>(maxH), alpha);
+   // pKill[h] = 1.0 - pow(static_cast<double>(h)/static_cast<double>(maxH), alpha);
+      pKill[h] = 1.0 - (alpha * (static_cast<double>(h)/static_cast<double>(maxH)))
   }
 
 }
