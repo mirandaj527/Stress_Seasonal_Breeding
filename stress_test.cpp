@@ -33,7 +33,7 @@ const double lambdaA  = 0.05;   // probability that predator arrives
 const double lambdaL  = 0.05;   // probability that predator leaves
 const double pAtt     = 0.5;     // probability that predator attacks if present
 const double alpha    = 0.0;     // parameter controlling effect of hormone level on pKill
-const double beta_b   = 0.5;     // parameter controlling effect of hormone level on reproductive rate
+const double beta_b   = 0.0;     // parameter controlling effect of hormone level on reproductive rate
 const double kappa    = 0.5;     // Parameter controlling affect of damage on mortality
 const double mu       = 0.1;   // background mortality (independent of hormone level and predation risk)
 const double rho      = 1.0;    // Fixed rate of repair
@@ -211,7 +211,7 @@ void Reproduction()
     {
         // EDIT: Tweaked reproduction function. It still includes affect of hormone AND of damage
         // could look at only includign affect of damage & not hormone level (avoids paying cost of hormones twice)
-      repro[d][h][0] = exp(-(pow(static_cast<double>(h)/static_cast<double>(maxH), beta_b) 
+      repro[d][h][0] = exp( - (beta_b*(static_cast<double>(h)/static_cast<double>(maxH)) 
                             + gamma_g*(static_cast<double>(d)/static_cast<double>(maxD))));
       for (s=1;s<maxS;s++) 
       {
