@@ -29,22 +29,22 @@
 using namespace std;
 
 const int seed        = time(0); // pseudo-random seed
-const double lambdaA  = 0.035;   // probability that predator arrives
-const double lambdaL  = 0.065;   // probability that predator leaves
+double lambdaA  = 0.035;   // probability that predator arrives
+double lambdaL  = 0.065;   // probability that predator leaves
 const double pAtt     = 0.5;     // probability that predator attacks if present
-const double alpha    = 0.1;     // parameter controlling effect of hormone level on pKill
+double alpha    = 0.1;     // parameter controlling effect of hormone level on pKill
 const double beta_b   = 0.0;     // parameter controlling effect of hormone level on reproductive rate
 const double kappa    = 0.0;     // Parameter controlling affect of damage on mortality
-const double mu       = 0.02;   // background mortality (independent of hormone level and predation risk)
-const double rho      = 1.0;    // Fixed rate of repair
+double mu       = 0.02;   // background mortality (independent of hormone level and predation risk)
+double rho      = 1.0;    // Fixed rate of repair
 const double h0       = 20.0;   // Reference hormone level
-const double omega    = 0.1;   // Effect of deviations from h0 on damage build-up
-const double gamma_g  = 0.1;     // Effect of damage on reproductive output
+double omega    = 0.1;   // Effect of deviations from h0 on damage build-up
+double gamma_g  = 0.1;     // Effect of damage on reproductive output
 const int maxI        = 100000; // maximum number of iterations
 const int maxT        = 25;     // maximum number of time steps since last saw predator
 const int maxD        = 100;    // Number of discrete damage levels?
 const int maxH        = 100;    // maximum hormone level
-const int maxS        = 5;       // Length of the breeding cycle
+int maxS        = 5;       // Length of the breeding cycle
 const int skip        = 10;       // interval between print-outs
 
 // Create a random engine with your chosen seed
@@ -589,75 +589,131 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
 }
 
 
-
-
-
-
 /* MAIN PROGRAM */
-int main()
+int main(int argc, char* argv[])
 {
-	c = 0;
+    // ----------------------------------------------------
+    // 1) Provide default filenames & parameters
+    //    for DP output and simulation base name
+    // ----------------------------------------------------
+    string dpOutputFilename = "stress.txt";  
+    string simOutputBase    = "ShortCycle";
 
-		///////////////////////////////////////////////////////
-		outfile.str("");
-		outfile << "stress.txt";
-		string outputfilename = outfile.str();
-		outputfile.open(outputfilename.c_str());
-		///////////////////////////////////////////////////////
+    // ----------------------------------------------------
+    // 2) Parse command-line arguments
+    //    e.g. "./Program lambdaA=0.04 dpFile=dpOut.txt simBase=MySim"
+    // ----------------------------------------------------
+    for (int argIndex = 1; argIndex < argc; argIndex++)
+    {
+        std::string arg = argv[argIndex];
 
-        outputfile << "Random seed: " << seed << endl; // write seed to output file
+        if      (arg.rfind("lambdaA=", 0) == 0)  { lambdaA   = std::stod(arg.substr(8)); }
+        else if (arg.rfind("lambdaL=", 0) == 0)  { lambdaL   = std::stod(arg.substr(8)); }
+        else if (arg.rfind("alpha=",   0) == 0)  { alpha     = std::stod(arg.substr(6)); }
+        else if (arg.rfind("mu=",      0) == 0)  { mu        = std::stod(arg.substr(3)); }
+        else if (arg.rfind("rho=",     0) == 0)  { rho       = std::stod(arg.substr(4)); }
+        else if (arg.rfind("omega=",   0) == 0)  { omega     = std::stod(arg.substr(6)); }
+        else if (arg.rfind("gamma_g=", 0) == 0)  { gamma_g   = std::stod(arg.substr(8)); }
+        else if (arg.rfind("maxS=",    0) == 0)  { maxS      = std::stoi(arg.substr(5)); }
+        else if (arg.rfind("dpFile=",  0) == 0)  { dpOutputFilename = arg.substr(7); }
+        else if (arg.rfind("simBase=", 0) == 0)  { simOutputBase    = arg.substr(8); }
+        else {
+            std::cerr << "Unrecognized argument: " << arg << std::endl;
+        }
+    }
 
-        FinalFit();
-        Predator();
-        Death();
-        Reproduction();
-        Damage();
+    // ----------------------------------------------------
+    // 3) Print out final parameter values 
+    //    so we know what's being used
+    // ----------------------------------------------------
+    std::cout << "Using parameters:\n";
+    std::cout << "  lambdaA = " << lambdaA << "\n"
+              << "  lambdaL = " << lambdaL << "\n"
+              << "  alpha   = " << alpha << "\n"
+              << "  mu      = " << mu << "\n"
+              << "  rho     = " << rho << "\n"
+              << "  omega   = " << omega << "\n"
+              << "  gamma_g = " << gamma_g << "\n"
+              << "  maxS    = " << maxS << "\n\n";
+    std::cout << "DP output file: " << dpOutputFilename << "\n";
+    std::cout << "Simulation base: " << simOutputBase << "\n\n";
 
-        cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << "\t" << "tothormonediff" << "\t" << "maxhormonediff" << "\t" << "c" << endl;
-        for (i=1;i<=maxI;i++)
-          {
-          OptDec();
-          ReplaceFit();
-	  ReplaceHormone();
+    // ----------------------------------------------------
+    // DP calculations to find optimal strat
+    // ----------------------------------------------------
+    c = 0;
 
-          if (maxfitdiff < 0.000001) 
-            {
-               cout << "Converged at iteration: " << i << ", maxfitdiff: " << maxfitdiff << endl;
-               break; // strategy has converged on optimal solution, so exit loop
-            }
-          if (i==maxI) 
-            { 
-              outputfile << "*** DID NOT CONVERGE WITHIN " << i << " ITERATIONS ***" << endl;
-            }
-	  if (maxhormonediff==0)
-	    {
-	      c++;  // Increment counter if maxfitdiff is still 0	    
-	    }
-	  else
-	   {
-	     c = 0;  
-	   }
-          if (c==150)
-	   {
-               cout << "Converged at iteration: " << i << ", maxfitdiff: " << maxfitdiff << endl;
-               break; // strategy has converged on optimal solution, so exit loop
-            }
- 	  if (i%skip==0)
-            {
-              cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << "\t" << tothormonediff << "\t" << maxhormonediff << "\t" << c << endl; // show fitness difference every 'skip' generations
-            }
-          }
+    // For the DP output file:
+    outfile.str("");
+    outfile << dpOutputFilename;
+    string outputfilename = outfile.str();
+    outputfile.open(outputfilename.c_str());
 
-        cout << endl;
-        outputfile << endl;
+    // Write seed
+    outputfile << "Random seed: " << seed << endl;
 
-        PrintStrat();
-        PrintParams();
-        outputfile.close(); //done with DP results, optimal strategy found
+    // Model init
+    FinalFit();
+    Predator();
+    Death();
+    Reproduction();
+    Damage();
 
-	 // 5) *** Now run your acute-attack simulation *** 
-  	 // e.g. if you named it SimAcutePhases()
-    	 SimAcutePhases("ShortCycle");
+    // DP iteration
+    cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << "\t"
+         << "tothormonediff" << "\t" << "maxhormonediff" << "\t" << "c" << endl;
 
-  return 0;
+    for (i=1; i <= maxI; i++)
+    {
+        OptDec();
+        ReplaceFit();
+        ReplaceHormone();
+
+        if (maxfitdiff < 0.000001) 
+        {
+           cout << "Converged at iteration: " << i 
+                << ", maxfitdiff: " << maxfitdiff << endl;
+           break; // strategy has converged, so exit loop
+        }
+        if (i == maxI) 
+        { 
+           outputfile << "*** DID NOT CONVERGE WITHIN " << i << " ITERATIONS ***" << endl;
+        }
+        if (maxhormonediff == 0)
+        {
+           c++;  // Increment counter if maxhormonediff is still 0
+        }
+        else
+        {
+           c = 0;
+        }
+        if (c == 150)
+        {
+           cout << "Converged at iteration: " << i 
+                << ", maxfitdiff: " << maxfitdiff << endl;
+           break; 
+        }
+        if (i % skip == 0)
+        {
+           cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << "\t"
+                << tothormonediff << "\t" << maxhormonediff << "\t" << c << endl;
+        }
+    }
+
+    // Convergence done or maxI reached
+    cout << endl;
+    outputfile << endl;
+
+    // Print strategy & params
+    PrintStrat();
+    PrintParams();
+    outputfile.close();
+
+    // ----------------------------------------------------
+    // 5) Finally, run the simulation 
+    //    passing simOutputBase to the function
+    // ----------------------------------------------------
+    SimAcutePhases(simOutputBase);
+
+    return 0;
 }
