@@ -44,7 +44,7 @@ const int maxI        = 100000; // maximum number of iterations
 const int maxT        = 25;     // maximum number of time steps since last saw predator
 const int maxD        = 100;    // Number of discrete damage levels?
 const int maxH        = 100;    // maximum hormone level
-const int maxS        = 5;       // Length of the breeding cycle
+int maxS        = 5;       // Length of the breeding cycle
 const int skip        = 10;       // interval between print-outs
 
 // Create a random engine with your chosen seed
@@ -436,25 +436,40 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
     int nPerPhase      = N / maxS; // # individuals starting in each phase
 
     // 2) Create arrays to track sums, sums of squares, and counts
-    //    We store them by time (0..simTime) and breeding phase (0..maxS-1).
-    static double sumD[51][maxS];       // sumD[time][s]
-    static double sumsqD[51][maxS];     // sum of (damage^2)
-    static double sumH[51][maxS];       // sum of hormone (or proportion)
-    static double sumsqH[51][maxS];     // sum of (hormone^2)
-    static int    countInd[51][maxS];   // how many individuals are in phase s at time t
+    	//    We store them by time (0..simTime) and breeding phase (0..maxS-1).
+    	// static double sumD[51][maxS];       // sumD[time][s]
+    	// static double sumsqD[51][maxS];     // sum of (damage^2)
+    	// static double sumH[51][maxS];       // sum of hormone (or proportion)
+    	// static double sumsqH[51][maxS];     // sum of (hormone^2)
+    	// static int    countInd[51][maxS];   // how many individuals are in phase s at time t
+	
+    // We'll declare them as vectors of vectors, so their size can
+    // be set at runtime once we know simTime and maxS.
+    std::vector<std::vector<double>> sumD;
+    std::vector<std::vector<double>> sumsqD;
+    std::vector<std::vector<double>> sumH;
+    std::vector<std::vector<double>> sumsqH;
+    std::vector<std::vector<int>>    countInd;	
 
+    // 3) Resize them (simTime+1 rows, maxS cols)
+    sumD.resize(simTime + 1,   std::vector<double>(maxS, 0.0));
+    sumsqD.resize(simTime + 1, std::vector<double>(maxS, 0.0));
+    sumH.resize(simTime + 1,   std::vector<double>(maxS, 0.0));
+    sumsqH.resize(simTime + 1, std::vector<double>(maxS, 0.0));
+    countInd.resize(simTime + 1, std::vector<int>(maxS, 0));	
+	
     // 3) Initialize all arrays to zero/false
-    for(int t=0; t<=simTime; t++)
-    {
-        for(int s=0; s<maxS; s++)
-        {
-            sumD[t][s]    = 0.0;
-            sumsqD[t][s]  = 0.0;
-            sumH[t][s]    = 0.0;
-            sumsqH[t][s]  = 0.0;
-            countInd[t][s] = 0;
-        }
-    }
+    // for(int t=0; t<=simTime; t++)
+    // {
+    //    for(int s=0; s<maxS; s++)
+    //    {
+    //        sumD[t][s]    = 0.0;
+    //        sumsqD[t][s]  = 0.0;
+    //        sumH[t][s]    = 0.0;
+    //        sumsqH[t][s]  = 0.0;
+    //        countInd[t][s] = 0;
+    //    }
+    // }
 
     // 4) Output file to store results
     string fname = "SimAttack_" + base_name + ".txt";
@@ -604,7 +619,7 @@ int main(int argc, char* argv[])
         else if (arg.rfind("rho=",     0) == 0)  { rho       = std::stod(arg.substr(4)); }
         else if (arg.rfind("omega=",   0) == 0)  { omega     = std::stod(arg.substr(6)); }
         else if (arg.rfind("gamma_g=", 0) == 0)  { gamma_g   = std::stod(arg.substr(8)); }
-        // else if (arg.rfind("maxS=",    0) == 0)  { maxS      = std::stoi(arg.substr(5)); }
+        else if (arg.rfind("maxS=",    0) == 0)  { maxS      = std::stoi(arg.substr(5)); }
         else if (arg.rfind("dpFile=",  0) == 0)  { dpOutputFilename = arg.substr(7); }
         else if (arg.rfind("simBase=", 0) == 0)  { simOutputBase    = arg.substr(8); }
         else {
