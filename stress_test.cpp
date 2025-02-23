@@ -620,7 +620,7 @@ int main()
           ReplaceFit();
 	  ReplaceHormone();
 
-          if (maxfitdiff < 0.001) 
+          if (maxfitdiff < 0.0001) 
             {
                cout << "Converged at iteration: " << i << ", maxfitdiff: " << maxfitdiff << endl;
                break; // strategy has converged on optimal solution, so exit loop
