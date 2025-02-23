@@ -47,6 +47,9 @@ const int maxH        = 100;    // maximum hormone level
 const int maxS        = 5;       // Length of the breeding cycle
 const int skip        = 10;       // interval between print-outs
 
+// Create a random engine with your chosen seed
+static std::mt19937 mt(seed);
+
 ofstream outputfile; // output file
 stringstream outfile; // for naming output file
 
