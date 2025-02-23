@@ -437,19 +437,15 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
 
     // 2) Create arrays to track sums, sums of squares, and counts
     //    We store them by time (0..simTime) and breeding phase (0..maxS-1).
-    static double sumD[51][101];       // sumD[time][s]
-    static double sumsqD[51][101];     // sum of (damage^2)
-    static double sumH[51][101];       // sum of hormone (or proportion)
-    static double sumsqH[51][101];     // sum of (hormone^2)
-    static int    countInd[51][101];   // how many individuals are in phase s at time t
-
-    // We also track if the predator attacks at a given time:
-    static bool attack[51];
+    static double sumD[51][maxS];       // sumD[time][s]
+    static double sumsqD[51][maxS];     // sum of (damage^2)
+    static double sumH[51][maxS];       // sum of hormone (or proportion)
+    static double sumsqH[51][maxS];     // sum of (hormone^2)
+    static int    countInd[51][maxS];   // how many individuals are in phase s at time t
 
     // 3) Initialize all arrays to zero/false
     for(int t=0; t<=simTime; t++)
     {
-        attack[t] = false;
         for(int s=0; s<maxS; s++)
         {
             sumD[t][s]    = 0.0;
@@ -460,14 +456,8 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
         }
     }
 
-    // Let's define the predator to attack exactly once at time=10
-    if(simTime >= 10)
-    {
-        attack[10] = true; // Predator attacks at t=10
-    }
-
     // 4) Output file to store results
-    string fname = "SimAcutePhases_" + base_name + ".txt";
+    string fname = "SimAttack_" + base_name + ".txt";
     ofstream outFile(fname.c_str());
     if(!outFile)
     {
