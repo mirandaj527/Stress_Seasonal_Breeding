@@ -44,7 +44,7 @@ const int maxI        = 100000; // maximum number of iterations
 const int maxT        = 25;     // maximum number of time steps since last saw predator
 const int maxD        = 100;    // Number of discrete damage levels?
 const int maxH        = 100;    // maximum hormone level
-int maxS        = 5;       // Length of the breeding cycle
+const int maxS        = 5;       // Length of the breeding cycle
 const int skip        = 10;       // interval between print-outs
 
 // Create a random engine with your chosen seed
@@ -587,7 +587,7 @@ int main(int argc, char* argv[])
     //    for DP output and simulation base name
     // ----------------------------------------------------
     string dpOutputFilename = "stress.txt";  
-    string simOutputBase    = "ShortCycle";
+    string simOutputBase    = "Test";
 
     // ----------------------------------------------------
     // 2) Parse command-line arguments
@@ -604,7 +604,7 @@ int main(int argc, char* argv[])
         else if (arg.rfind("rho=",     0) == 0)  { rho       = std::stod(arg.substr(4)); }
         else if (arg.rfind("omega=",   0) == 0)  { omega     = std::stod(arg.substr(6)); }
         else if (arg.rfind("gamma_g=", 0) == 0)  { gamma_g   = std::stod(arg.substr(8)); }
-        else if (arg.rfind("maxS=",    0) == 0)  { maxS      = std::stoi(arg.substr(5)); }
+        // else if (arg.rfind("maxS=",    0) == 0)  { maxS      = std::stoi(arg.substr(5)); }
         else if (arg.rfind("dpFile=",  0) == 0)  { dpOutputFilename = arg.substr(7); }
         else if (arg.rfind("simBase=", 0) == 0)  { simOutputBase    = arg.substr(8); }
         else {
