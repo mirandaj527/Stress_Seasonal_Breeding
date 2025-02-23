@@ -29,13 +29,13 @@
 using namespace std;
 
 const int seed        = time(0); // pseudo-random seed
-const double lambdaA  = 0.05;   // probability that predator arrives
-const double lambdaL  = 0.05;   // probability that predator leaves
+const double lambdaA  = 0.035;   // probability that predator arrives
+const double lambdaL  = 0.065;   // probability that predator leaves
 const double pAtt     = 0.5;     // probability that predator attacks if present
 const double alpha    = 0.1;     // parameter controlling effect of hormone level on pKill
 const double beta_b   = 0.0;     // parameter controlling effect of hormone level on reproductive rate
 const double kappa    = 0.0;     // Parameter controlling affect of damage on mortality
-const double mu       = 0.1;   // background mortality (independent of hormone level and predation risk)
+const double mu       = 0.02;   // background mortality (independent of hormone level and predation risk)
 const double rho      = 1.0;    // Fixed rate of repair
 const double h0       = 20.0;   // Reference hormone level
 const double omega    = 0.1;   // Effect of deviations from h0 on damage build-up
@@ -45,7 +45,7 @@ const int maxT        = 25;     // maximum number of time steps since last saw p
 const int maxD        = 100;    // Number of discrete damage levels?
 const int maxH        = 100;    // maximum hormone level
 const int maxS        = 5;       // Length of the breeding cycle
-const int skip        = 1;       // interval between print-outs
+const int skip        = 10;       // interval between print-outs
 
 ofstream outputfile; // output file
 stringstream outfile; // for naming output file
@@ -424,6 +424,172 @@ void PrintParams()
 
 
 
+void SimAcutePhases(const string &base_name) // Simulating predator attack at t=10
+{
+    // 1) Simulation parameters
+    const int simTime  = 50;      // We'll simulate from time=0 to time=50
+    const int N        = 1000;    // Total individuals
+    // We'll assume N is evenly divisible by maxS:
+    int nPerPhase      = N / maxS; // # individuals starting in each phase
+
+    // 2) Create arrays to track sums, sums of squares, and counts
+    //    We store them by time (0..simTime) and breeding phase (0..maxS-1).
+    static double sumD[51][101];       // sumD[time][s]
+    static double sumsqD[51][101];     // sum of (damage^2)
+    static double sumH[51][101];       // sum of hormone (or proportion)
+    static double sumsqH[51][101];     // sum of (hormone^2)
+    static int    countInd[51][101];   // how many individuals are in phase s at time t
+
+    // We also track if the predator attacks at a given time:
+    static bool attack[51];
+
+    // 3) Initialize all arrays to zero/false
+    for(int t=0; t<=simTime; t++)
+    {
+        attack[t] = false;
+        for(int s=0; s<maxS; s++)
+        {
+            sumD[t][s]    = 0.0;
+            sumsqD[t][s]  = 0.0;
+            sumH[t][s]    = 0.0;
+            sumsqH[t][s]  = 0.0;
+            countInd[t][s] = 0;
+        }
+    }
+
+    // Let's define the predator to attack exactly once at time=10
+    if(simTime >= 10)
+    {
+        attack[10] = true; // Predator attacks at t=10
+    }
+
+    // 4) Output file to store results
+    string fname = "SimAcutePhases_" + base_name + ".txt";
+    ofstream outFile(fname.c_str());
+    if(!outFile)
+    {
+        cerr << "Error opening file: " << fname << endl;
+        return;
+    }
+
+    // Write a header
+    outFile << "ACUTE ATTACK SIMULATION (split pop by breeding phase)\n";
+    outFile << "time\ts\tnInd\tmeanD\tsdD\tmeanH\tsdH\n";
+
+    // 5) Simulate each individual
+    //    We distribute individuals so that nPerPhase start in phase=0,
+    //    another nPerPhase in phase=1, etc.
+    uniform_real_distribution<double> Uniform(0.0, 1.0);
+
+    // We'll loop over each phase sVal as the starting phase
+    for(int sVal=0; sVal<maxS; sVal++)
+    {
+        // We'll create nPerPhase individuals that start in sVal
+        for(int i=0; i<nPerPhase; i++)
+        {
+            // (a) Initialize state for this individual
+            int tState = maxT - 1; // time-since-attack state for DP
+            int d      = 0;       // damage
+            int sInd   = sVal;    // breeding phase for this individual
+            int time   = 0;       // simulation time steps (0..simTime)
+
+            // (b) Step through time
+            while(time <= simTime)
+            {
+                // If the predator attacks at time=10, we reset tState=0
+                // else we increment tState
+                if(time == 10)
+                {
+                    tState = 0;
+                }
+                else
+                {
+                    tState = min(tState + 1, maxT - 1);
+                }
+
+                // (c) Retrieve optimal hormone from DP
+                int h = hormone[tState][d][sInd];
+
+                // (d) Update damage according to damage_new
+                double d_next = damage_new[d][h];
+                int    d1     = floor(d_next);
+                int    d2     = ceil(d_next);
+                double frac   = d_next - double(d1);
+
+                double randVal = Uniform(mt);
+                if(randVal < frac) d = d2; else d = d1;
+
+                // (e) Record stats: we store the individual's damage/hormone
+                //     in the bin for (time, sInd).
+                sumD[time][sInd]    += d;
+                sumsqD[time][sInd]  += (double(d) * double(d));
+
+                double hProp = double(h) / double(maxH);
+                sumH[time][sInd]    += hProp;
+                sumsqH[time][sInd]  += (hProp * hProp);
+
+                // increment count of individuals in that phase
+                countInd[time][sInd]++;
+
+                // (f) Advance the breeding phase for next time step
+                sInd = (sInd + 1) % maxS;
+
+                // (g) Move forward in simulation time
+                time++;
+            }
+        }
+    }
+
+    // 6) Now compute means and standard deviations
+    //    and output them to the file for each time and breeding phase.
+    for(int t=0; t <= simTime; t++)
+    {
+        for(int s=0; s < maxS; s++)
+        {
+            int n = countInd[t][s];
+            if(n > 0)
+            {
+                double meanD_ = sumD[t][s] / double(n);
+                double varD_  = (sumsqD[t][s]/double(n)) - (meanD_*meanD_);
+
+                double meanH_ = sumH[t][s] / double(n);
+                double varH_  = (sumsqH[t][s]/double(n)) - (meanH_*meanH_);
+
+                double sdD = (varD_>0.0) ? sqrt(varD_) : 0.0;
+                double sdH = (varH_>0.0) ? sqrt(varH_) : 0.0;
+
+                // We'll print: time, breeding phase, # of individuals, meanD, sdD, meanH, sdH
+                outFile << t << "\t" 
+                        << s << "\t" 
+                        << n << "\t" 
+                        << meanD_ << "\t" 
+                        << sdD << "\t"
+                        << meanH_ << "\t"
+                        << sdH << "\n";
+            }
+            else
+            {
+                // No individuals in this bin => just print zero or skip
+                outFile << t << "\t" 
+                        << s << "\t" 
+                        << 0 << "\t" 
+                        << 0.0 << "\t" 
+                        << 0.0 << "\t"
+                        << 0.0 << "\t"
+                        << 0.0 << "\n";
+            }
+        }
+    }
+
+    outFile.close();
+    cout << "Simulation complete! Results in: " << fname << endl;
+}
+
+
+
+
+
+
 /* MAIN PROGRAM */
 int main()
 {
@@ -484,8 +650,11 @@ int main()
 
         PrintStrat();
         PrintParams();
-        outputfile.close();
+        outputfile.close(); //done with DP results, optimal strategy found
 
+	 // 5) *** Now run your acute-attack simulation *** 
+  	 // e.g. if you named it SimAcutePhases()
+    	 SimAcutePhases("ShortCycle");
 
   return 0;
 }
