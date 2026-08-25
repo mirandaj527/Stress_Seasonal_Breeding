@@ -26,9 +26,6 @@
 
 // constants, type definitions, etc.
 
-using namespace std;
-
-const int seed        = time(0); // pseudo-random seed
 double lambdaA  = 0.035;   // probability that predator arrives
 double lambdaL  = 0.065;   // probability that predator leaves
 const double pAtt     = 0.5;     // probability that predator attacks if present
@@ -40,109 +37,70 @@ double rho      = 1.0;    // Fixed rate of repair
 const double h0       = 20.0;   // Reference hormone level
 double omega    = 0.1;   // Effect of deviations from h0 on damage build-up
 double gamma_g  = 0.1;     // Effect of damage on reproductive output
-const int maxI        = 100000; // maximum number of iterations
-const int maxT        = 25;     // maximum number of time steps since last saw predator
-const int maxD        = 100;    // Number of discrete damage levels?
-const int maxH        = 100;    // maximum hormone level
-const int maxS        = 5;       // Length of the breeding cycle
-const int skip        = 10;       // interval between print-outs
+double fec_scale = 1.0; 
+double fec_baseline = 0.0;
+
+int maxI        = 100000; // maximum number of iterations
+int maxT        = 25;     // maximum number of time steps since last saw predator
+int maxD        = 100;    // Number of discrete damage levels?
+int maxH        = 100;    // maximum hormone level
+int maxS        = 10;       // Length of the breeding cycle
+int skip        = 10;       // interval between print-outs
+
+bool stdoutput = true;
 
 // Create a random engine with your chosen seed
+std::random_device rd{}; 
+unsigned seed = rd();
 static std::mt19937 mt(seed);
 
-ofstream outputfile; // output file
-stringstream outfile; // for naming output file
+std::ofstream outputfile; // output file
+std::stringstream outfile; // for naming output file
 
-//int hormone[maxT][maxD][maxS];          // hormone level (strategy)                                   
-vector<                                   // vector 1: maxT
-  vector<                                 // vector 2: maxD                                 
-    vector<int>>>                         // vector 3: maxS
-      hormone(maxT,                                        
-        vector<                                
-          vector<int>> 
-            (maxD, 
-              vector<int> (maxS, 0.0)     // initialising internal vector of length maxS to contain 0s
-            )
-);
-// storing optimal hormone level for next time step
-vector<                                   // vector 1: maxT
-  vector<                                 // vector 2: maxD                                 
-    vector<int>>>                         // vector 3: maxS
-      hormone_next(maxT,                                        
-        vector<                                
-          vector<int>> 
-            (maxD, 
-              vector<int> (maxS, 0.0)     // initialising internal vector of length maxS to contain 0s
-            )
-);
+//int hormone[maxT][maxD][maxS];          // hormone level (strategy)                               //int hormone_next[maxT][maxD][maxS];   // optimal hormone levels given next time step
+
+std::vector<                                   // vector 1: maxT
+  std::vector<                                 // vector 2: maxD                                 
+    std::vector<int>>> hormone, hormone_next;                        // vector 3: maxS
+
 //double pKill[maxH];                     // probability of being killed by an attacking predator
-vector<double> pKill(maxH, 0.0);
+std::vector<double> pKill;
+
 //double repro[maxD][maxH][maxS];         // reproductive output
-vector<                                   // vector 1: maxD
-  vector<                                 // vector 2: maxH
-    vector<double>>>                      // vector 3: maxS
-      repro(maxD,
-        vector<
-          vector<double>>
-            (maxH,
-              vector<double> (maxS, 0.0)
-            )
-);
+std::vector<                                   // std::vector 1: maxD
+  std::vector<                                 // std::vector 2: maxH
+    std::vector<double>>>                      // std::vector 3: maxS
+      repro;
 //double Wopt[maxT][maxD][maxS];          // fitness immediately after predator has/hasn't attacked, under optimal decision h
-vector<                                   // vector 1: maxT
-  vector<                                 // vector 2: maxD                                 
-    vector<double>>>                         // vector 3: maxS
-      Wopt(maxT,                                        
-        vector<                                
-          vector<double>> 
-            (maxD, 
-              vector<double> (maxS, 0.0)       
-            )
-);
+std::vector<                                   // std::vector 1: maxT
+  std::vector<                                 // std::vector 2: maxD                                 
+    std::vector<double>>>                         // std::vector 3: maxS
+      Wopt;
+
 //double W[maxT][maxD][maxH][maxS];       // expected fitness at start of time step, before predator does/doesn't attack
-vector<                                   // vector 1: maxT
-  vector<                                 // vector 2: maxD
-    vector<                               // vector 3: maxH
-      vector<double>>>>                   // vector 4: maxS
-        W(maxT,
-          vector<
-            vector<
-              vector<double>>>
-                (maxD,
-                  vector<
-                    vector<double>>
-                      (maxH,
-                        vector<double> (maxS, 0.0)
-                      )
-                )
-);
+std::vector<                                   // std::vector 1: maxT
+  std::vector<                                 // std::vector 2: maxD
+    std::vector<                               // std::vector 3: maxH
+      std::vector<double>>>>                   // std::vector 4: maxS
+        W;
+
 //double Wnext[maxT][maxD][maxH][maxS];   // expected fitness at start of next time step
-vector<                                   // vector 1: maxT
-  vector<                                 // vector 2: maxD
-    vector<                               // vector 3: maxH
-      vector<double>>>>                   // vector 4: maxS
-        Wnext(maxT,
-          vector<
-            vector<
-              vector<double>>>
-                (maxD,
-                  vector<
-                    vector<double>>
-                      (maxH,
-                        vector<double> (maxS, 0.0)
-                      )
-                )
-);
+std::vector<                                   // std::vector 1: maxT
+  std::vector<                                 // std::vector 2: maxD
+    std::vector<                               // std::vector 3: maxH
+      std::vector<double>>>>                   // std::vector 4: maxS
+        Wnext;
+
 //double pPred[maxT];                     // probability that predator is present
-vector<double> pPred(maxT, 0.0);
+std::vector<double> pPred;
 //double damage_new[maxD][maxH];          // array of current damage
-vector<                                   // vector 1: maxD
-  vector<double>>                         // vector 2: maxH
+std::vector<                                   // std::vector 1: maxD
+  std::vector<double>>                         // std::vector 2: maxH
     damage_new(maxD,
-      vector<double> (maxH, 0.0)
+      std::vector<double> (maxH, 0.0)
 );
 //double background_mortality[d]
-vector<double> background_mortality(maxD, 0.0);
+std::vector<double> background_mortality(maxD, 0.0);
 
 double totfitdiff;                        // fitness difference between optimal strategy in successive iterations
 double maxfitdiff;
@@ -153,6 +111,106 @@ int i;     // iteration
 
 int c;     // count
 
+/* initialize all vectors after we have
+ * obtained dimensions via command line */
+void InitVectors()
+{
+    // initialize hormone vector
+    // which has dimensions
+    //int hormone[maxT][maxD][maxS];          
+    //
+    // we do so by creating local vec
+    // and assigning that to global
+    std::vector <  // vector 1: maxT
+        std::vector <  // vector 2: maxD
+            std::vector < int >>> // vector 3: maxS
+            local_hormone(maxT,
+                    std::vector<                                
+                      std::vector<int>> 
+                        (maxD, 
+                          std::vector<int> (maxS, 0)     // initialising internal vector of length maxS to contain 0s
+                        )
+            );
+
+    hormone = local_hormone;
+    hormone_next = local_hormone;
+
+    std::vector <double> pKill_local(maxH, 0.0);
+    pKill = pKill_local;
+
+    //double repro[maxD][maxH][maxS];         // reproductive output
+    std::vector < // maxD
+        std::vector < // maxH
+            std::vector < double >>> // maxS
+                local_repro(
+                        maxD,
+                        std::vector <
+                            std::vector < double >>
+                                (maxH,
+                                    std::vector < double > (maxS, 0.0)
+                                )
+                            );
+
+    repro = local_repro;
+
+    //double Wopt[maxT][maxD][maxS];          // fitness immediately after predator has/hasn't attacked, under optimal decision h
+    std::vector<                                   // vector 1: maxT
+        std::vector<                                 // vector 2: maxD                                          
+            std::vector<double>>>                         // vector 3: maxS
+                Wopt_local(maxT,                                        
+                    std::vector<                                
+                        std::vector<double>> 
+                            (maxD, 
+                              std::vector<double> (maxS)       
+                            )
+                        );
+
+    Wopt = Wopt_local;
+
+//double W[maxT][maxD][maxH][maxS];       // expected fitness at start of time step, before predator does/doesn't attack
+    std::vector<                                   // vector 1: maxT
+        std::vector<                                 // vector 2: maxD
+            std::vector<                               // vector 3: maxH
+                std::vector<double>>>>                   // vector 4: maxS
+                    Wlocal(maxT,
+                        std::vector<
+                            std::vector<
+                                std::vector<double>>>
+                                    (maxD,
+                                        std::vector<
+                                            std::vector<double>>
+                                                (maxH,
+                                                    std::vector<double> (maxS)
+                                                )
+                                    )
+                            );
+    W = Wlocal;
+//double Wnext[maxT][maxD][maxH][maxS];   // expected fitness at start of next time step
+
+    Wnext = Wlocal;
+
+
+    // initialize predation probabilities
+    std::vector <double> pPred_local(maxT, 0.0);
+    pPred = pPred_local;
+
+    // initialize damage updating vector
+
+
+    std::vector<                                   // vector 1: maxD
+        std::vector<double>>                         // vector 2: maxH
+            damage_new_local(maxD,
+                std::vector<double> (
+                    maxH, 0.0)
+                            );
+
+    damage_new = damage_new_local;
+
+    std::vector<double> background_mortality_local(maxD, 0.0);
+
+    background_mortality = background_mortality_local;
+
+} // end InitVectors()
 
 /* SPECIFY FINAL FITNESS */
 void FinalFit()
@@ -215,7 +273,7 @@ void Reproduction()
     {
         // EDIT: Tweaked reproduction function. It still includes affect of hormone AND of damage
         // could look at only includign affect of damage & not hormone level (avoids paying cost of hormones twice)
-      repro[d][h][0] = exp(-(beta_b*(static_cast<double>(h)/static_cast<double>(maxH)) 
+      repro[d][h][0] = fec_baseline + fec_scale * exp(-(beta_b*(static_cast<double>(h)/static_cast<double>(maxH)) 
                             + gamma_g*(static_cast<double>(d)/static_cast<double>(maxD))));
       for (s=1;s<maxS;s++) 
       {
@@ -238,7 +296,9 @@ void Damage()
     for (h=0;h<maxH;h++)
     {
       damage_new[d][h] = d + omega*pow(h - h0, 2) - rho;
-      damage_new[d][h] = max(0.0, min(static_cast<double>(maxD-1), damage_new[d][h])); 
+      damage_new[d][h] = std::max(
+              0.0, 
+              std::min(static_cast<double>(maxD-1), damage_new[d][h])); 
       //max function ensures damage level never goes below 0, min function ensures it never goes above maxD
     }
   }
@@ -252,7 +312,9 @@ void Mortality()
 
     for (d=0;d<maxD;d++)
     {
-        background_mortality[d] = min(1.0, (mu + (1.0 - exp(-kappa*(static_cast<double>(d)/static_cast<double>(maxD))))));
+        background_mortality[d] = std::min(
+                1.0, 
+                (mu + (1.0 - std::exp(-kappa*(static_cast<double>(d)/static_cast<double>(maxD))))));
     }
 }
 
@@ -284,15 +346,15 @@ void OptDec()
           //                    [(s + 1) % maxS];      // (s + 1) % maxS resets S back to 0 after it reaches maxS - 1
 
           // NEW FITNESS CODE:
-            d1=floor(damage_new[d][h]); // lower integer value of damage
-            d2=ceil(damage_new[d][h]); // top integer value
+            d1=std::floor(damage_new[d][h]); // lower integer value of damage
+            d2=std::ceil(damage_new[d][h]); // top integer value
             ddif = damage_new[d][h] - static_cast<double>(d1); // calculate difference 
 
             // calculate fitness from W' as a function of t, d, s, h
             fitness = 
-                (1.0 - ddif) * Wnext[min(maxT - 1, t + 1)][d1][h][(s + 1) % maxS] // deterministic rounding
+                (1.0 - ddif) * Wnext[std::min(maxT - 1, t + 1)][d1][h][(s + 1) % maxS] // deterministic rounding
                 + 
-                ddif * Wnext[min(maxT - 1, t + 1)][d2][h][(s + 1) % maxS];
+                ddif * Wnext[std::min(maxT - 1, t + 1)][d2][h][(s + 1) % maxS];
 	      
 
         // compare with current optimal fitness for this specific combination of t,d,s
@@ -321,7 +383,7 @@ void OptDec()
                           (Wopt[t][d][s]+repro[d][h][s]);  // no attack
 
           // Checking to see if fitness values are sensible:
-          // cout << W[t][d][h][s] << ";" << t << ";" << d << ";" << h << ";" << s << endl;
+          // std::cout << W[t][d][h][s] << ";" << t << ";" << d << ";" << h << ";" << s << std::endl;
         }
       }
     }
@@ -347,8 +409,8 @@ void ReplaceFit()
       {
         for (s=0;s<maxS;s++)
         {
-          totfitdiff = totfitdiff + abs(Wnext[t][d][h][s]-W[t][d][h][s]);
-	  maxfitdiff = max(maxfitdiff, abs(Wnext[t][d][h][s]-W[t][d][h][s]));
+          totfitdiff = totfitdiff + std::abs(Wnext[t][d][h][s]-W[t][d][h][s]);
+	  maxfitdiff = std::max(maxfitdiff, std::abs(Wnext[t][d][h][s]-W[t][d][h][s]));
           Wnext[t][d][h][s] = W[t][d][h][s];
         }
       }
@@ -371,8 +433,8 @@ void ReplaceHormone()
       {
         for (s=0;s<maxS;s++)
         {
-          tothormonediff = tothormonediff + abs(hormone_next[t][d][s]-hormone[t][d][s]);
-	  maxhormonediff = max(maxhormonediff, static_cast<double>(abs(hormone_next[t][d][s]-hormone[t][d][s])));
+          tothormonediff = tothormonediff + std::abs(hormone_next[t][d][s]-hormone[t][d][s]);
+	  maxhormonediff = std::max(maxhormonediff, static_cast<double>(std::abs(hormone_next[t][d][s]-hormone[t][d][s])));
           hormone_next[t][d][s] = hormone[t][d][s];
         }
       }
@@ -384,7 +446,7 @@ void PrintStrat()
 {
   int t,d,s;
 
-  outputfile << "t" << "\t" << "d" << "\t" << "s" << "\t" << "hormone" << endl;
+  outputfile << "t" << "\t" << "d" << "\t" << "s" << "\t" << "hormone" << std::endl;
 
   for (t=0;t<maxT;t++)
   {
@@ -392,13 +454,13 @@ void PrintStrat()
     {
       for (s=0;s<maxS;s++)
       {
-        outputfile << t << "\t" << d << "\t" << s << "\t" << hormone[t][d][s] << endl;
+        outputfile << t << "\t" << d << "\t" << s << "\t" << hormone[t][d][s] << std::endl;
       }
     }
   }
-  outputfile << endl;
-  outputfile << "nIterations" << "\t" << i << endl;
-  outputfile << endl;
+  outputfile << std::endl;
+  outputfile << "nIterations" << "\t" << i << std::endl;
+  outputfile << std::endl;
 }
 
 
@@ -407,27 +469,29 @@ void PrintStrat()
 /* WRITE PARAMETER SETTINGS TO OUTPUT FILE */
 void PrintParams()
 {
-  outputfile << endl << "PARAMETER VALUES" << endl
-       << "lambdaL: " << "\t" << lambdaL << endl
-       << "lambdaA: " << "\t" << lambdaA << endl
-       << "pAtt: " << "\t" << pAtt << endl
-       << "alpha: " << "\t" << alpha << endl
-       << "beta: " << "\t" << beta_b << endl
-       << "mu: " << "\t" << mu << endl
-       << "rho: " << "\t" << rho << endl
-       << "h0: " << "\t" << h0 << endl
-       << "omega: " << "\t" << omega << endl
-       << "gamma: " << "\t" << gamma_g << endl
-       << "maxI: " << "\t" << maxI << endl
-       << "maxT: " << "\t" << maxT << endl
-       << "maxD: " << "\t" << maxD << endl
-       << "maxH: " << "\t" << maxH << endl
-       << "maxS: " << "\t" << maxS << endl;
+  outputfile << std::endl << "PARAMETER VALUES" << std::endl
+       << "lambdaL: " << "\t" << lambdaL << std::endl
+       << "lambdaA: " << "\t" << lambdaA << std::endl
+       << "pAtt: " << "\t" << pAtt << std::endl
+       << "alpha: " << "\t" << alpha << std::endl
+       << "beta: " << "\t" << beta_b << std::endl
+       << "mu: " << "\t" << mu << std::endl
+       << "rho: " << "\t" << rho << std::endl
+       << "fec_scale: " << "\t" << fec_scale << std::endl
+       << "fec_baseline: " << "\t" << fec_baseline << std::endl
+       << "h0: " << "\t" << h0 << std::endl
+       << "omega: " << "\t" << omega << std::endl
+       << "gamma: " << "\t" << gamma_g << std::endl
+       << "maxI: " << "\t" << maxI << std::endl
+       << "maxT: " << "\t" << maxT << std::endl
+       << "maxD: " << "\t" << maxD << std::endl
+       << "maxH: " << "\t" << maxH << std::endl
+       << "maxS: " << "\t" << maxS << std::endl;
 }
 
 
 
-void SimAcutePhases(const string &base_name) // Simulating predator attack at t=10
+void SimAcutePhases(const std::string &base_name) // Simulating predator attack at t=10
 {
     // 1) Simulation parameters
     const int simTime  = 50;      // We'll simulate from time=0 to time=50
@@ -437,31 +501,37 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
 
     // 2) Create arrays to track sums, sums of squares, and counts
     //    We store them by time (0..simTime) and breeding phase (0..maxS-1).
-    static double sumD[51][maxS];       // sumD[time][s]
-    static double sumsqD[51][maxS];     // sum of (damage^2)
-    static double sumH[51][maxS];       // sum of hormone (or proportion)
-    static double sumsqH[51][maxS];     // sum of (hormone^2)
-    static int    countInd[51][maxS];   // how many individuals are in phase s at time t
+    std::vector < 
+        std::vector < double >> sumD(simTime + 1, 
+                                    std::vector< double > (maxS, 0.0)
+                );
 
-    // 3) Initialize all arrays to zero/false
-    for(int t=0; t<=simTime; t++)
-    {
-        for(int s=0; s<maxS; s++)
-        {
-            sumD[t][s]    = 0.0;
-            sumsqD[t][s]  = 0.0;
-            sumH[t][s]    = 0.0;
-            sumsqH[t][s]  = 0.0;
-            countInd[t][s] = 0;
-        }
-    }
+    std::vector < 
+        std::vector < double >> sumsqD(simTime + 1, 
+                                    std::vector< double > (maxS, 0.0)
+                );
+    
+    std::vector < 
+        std::vector < double >> sumH(simTime + 1, 
+                                    std::vector< double > (maxS, 0.0)
+                );
+    
+    std::vector < 
+        std::vector < double >> sumsqH(simTime + 1, 
+                                    std::vector< double > (maxS, 0.0)
+                );
+    
+    std::vector < 
+        std::vector < int >> countInd(simTime + 1, 
+                                    std::vector< int > (maxS, 0.0)
+                );
 
-    // 4) Output file to store results
-    string fname = "SimAttack_" + base_name + ".txt";
-    ofstream outFile(fname.c_str());
+    // 3) Output file to store results
+    std::string fname = "SimAttack_" + base_name + ".txt";
+    std::ofstream outFile(fname.c_str());
     if(!outFile)
     {
-        cerr << "Error opening file: " << fname << endl;
+        std::cerr << "Error opening file: " << fname << std::endl;
         return;
     }
 
@@ -469,10 +539,10 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
     outFile << "ACUTE ATTACK SIMULATION (split pop by breeding phase)\n";
     outFile << "time\ts\tnInd\tmeanD\tsdD\tmeanH\tsdH\n";
 
-    // 5) Simulate each individual
+    // 4) Simulate each individual
     //    We distribute individuals so that nPerPhase start in phase=0,
     //    another nPerPhase in phase=1, etc.
-    uniform_real_distribution<double> Uniform(0.0, 1.0);
+    std::uniform_real_distribution<double> Uniform(0.0, 1.0);
 
     // We'll loop over each phase sVal as the starting phase
     for(int sVal=0; sVal<maxS; sVal++)
@@ -497,7 +567,7 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
                 }
                 else
                 {
-                    tState = min(tState + 1, maxT - 1);
+                    tState = std::min(tState + 1, maxT - 1);
                 }
 
                 // (c) Retrieve optimal hormone from DP
@@ -505,8 +575,8 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
 
                 // (d) Update damage according to damage_new
                 double d_next = damage_new[d][h];
-                int    d1     = floor(d_next);
-                int    d2     = ceil(d_next);
+                int    d1     = std::floor(d_next);
+                int    d2     = std::ceil(d_next);
                 double frac   = d_next - double(d1);
 
                 double randVal = Uniform(mt);
@@ -575,7 +645,11 @@ void SimAcutePhases(const string &base_name) // Simulating predator attack at t=
     }
 
     outFile.close();
-    cout << "Simulation complete! Results in: " << fname << endl;
+
+    if (stdoutput)
+    {
+        std::cout << "Simulation complete! Results in: " << fname << std::endl;
+    }
 }
 
 
@@ -586,8 +660,8 @@ int main(int argc, char* argv[])
     // 1) Provide default filenames & parameters
     //    for DP output and simulation base name
     // ----------------------------------------------------
-    string dpOutputFilename = "stress.txt";  
-    string simOutputBase    = "Test";
+    std::string dpOutputFilename = "stress.txt";  
+    std::string simOutputBase    = "Test";
 
     // ----------------------------------------------------
     // 2) Parse command-line arguments
@@ -604,6 +678,8 @@ int main(int argc, char* argv[])
         else if (arg.rfind("rho=",     0) == 0)  { rho       = std::stod(arg.substr(4)); }
         else if (arg.rfind("omega=",   0) == 0)  { omega     = std::stod(arg.substr(6)); }
         else if (arg.rfind("gamma_g=", 0) == 0)  { gamma_g   = std::stod(arg.substr(8)); }
+        else if (arg.rfind("stdoutput=", 0) == 0)  { stdoutput = static_cast<bool>(std::stoi(arg.substr(10))); }
+        else if (arg.rfind("maxS=", 0) == 0)  { maxS = std::stoi(arg.substr(5)); }
         // else if (arg.rfind("maxS=",    0) == 0)  { maxS      = std::stoi(arg.substr(5)); }
         else if (arg.rfind("dpFile=",  0) == 0)  { dpOutputFilename = arg.substr(7); }
         else if (arg.rfind("simBase=", 0) == 0)  { simOutputBase    = arg.substr(8); }
@@ -616,18 +692,23 @@ int main(int argc, char* argv[])
     // 3) Print out final parameter values 
     //    so we know what's being used
     // ----------------------------------------------------
-    std::cout << "Using parameters:\n";
-    std::cout << "  lambdaA = " << lambdaA << "\n"
-              << "  lambdaL = " << lambdaL << "\n"
-              << "  alpha   = " << alpha << "\n"
-              << "  mu      = " << mu << "\n"
-              << "  rho     = " << rho << "\n"
-              << "  omega   = " << omega << "\n"
-              << "  gamma_g = " << gamma_g << "\n"
-              << "  maxS    = " << maxS << "\n\n";
-    std::cout << "DP output file: " << dpOutputFilename << "\n";
-    std::cout << "Simulation base: " << simOutputBase << "\n\n";
+    
+    if (stdoutput)
+    {
+        std::cout << "Using parameters:\n";
+        std::cout << "  lambdaA = " << lambdaA << "\n"
+                  << "  lambdaL = " << lambdaL << "\n"
+                  << "  alpha   = " << alpha << "\n"
+                  << "  mu      = " << mu << "\n"
+                  << "  rho     = " << rho << "\n"
+                  << "  omega   = " << omega << "\n"
+                  << "  gamma_g = " << gamma_g << "\n"
+                  << "  maxS    = " << maxS << "\n\n";
+        std::cout << "DP output file: " << dpOutputFilename << "\n";
+        std::cout << "Simulation base: " << simOutputBase << "\n\n";
+    }
 
+    InitVectors();
     // ----------------------------------------------------
     // DP calculations to find optimal strat
     // ----------------------------------------------------
@@ -636,11 +717,11 @@ int main(int argc, char* argv[])
     // For the DP output file:
     outfile.str("");
     outfile << dpOutputFilename;
-    string outputfilename = outfile.str();
+    std::string outputfilename = outfile.str();
     outputfile.open(outputfilename.c_str());
 
     // Write seed
-    outputfile << "Random seed: " << seed << endl;
+    outputfile << "Random seed: " << seed << std::endl;
 
     // Model init
     FinalFit();
@@ -650,8 +731,11 @@ int main(int argc, char* argv[])
     Damage();
 
     // DP iteration
-    cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << "\t"
-         << "tothormonediff" << "\t" << "maxhormonediff" << "\t" << "c" << endl;
+    if (stdoutput)
+    {
+        std::cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << "\t"
+             << "tothormonediff" << "\t" << "maxhormonediff" << "\t" << "c" << std::endl;
+    }
 
     for (i=1; i <= maxI; i++)
     {
@@ -661,13 +745,16 @@ int main(int argc, char* argv[])
 
         if (maxfitdiff < 0.000001) 
         {
-           cout << "Converged at iteration: " << i 
-                << ", maxfitdiff: " << maxfitdiff << endl;
+            if (stdoutput)
+            {
+               std::cout << "Converged at iteration: " << i 
+                    << ", maxfitdiff: " << maxfitdiff << std::endl;
+            }
            break; // strategy has converged, so exit loop
         }
         if (i == maxI) 
         { 
-           outputfile << "*** DID NOT CONVERGE WITHIN " << i << " ITERATIONS ***" << endl;
+           outputfile << "*** DID NOT CONVERGE WITHIN " << i << " ITERATIONS ***" << std::endl;
         }
         if (maxhormonediff == 0)
         {
@@ -677,22 +764,33 @@ int main(int argc, char* argv[])
         {
            c = 0;
         }
-        if (c == 150)
+
+        if (c >= 150)
         {
-           cout << "Converged at iteration: " << i 
-                << ", maxfitdiff: " << maxfitdiff << endl;
+            if (stdoutput)
+            {
+               std::cout << "Converged at iteration: " << i 
+                    << ", maxfitdiff: " << maxfitdiff << std::endl;
+            }
            break; 
         }
         if (i % skip == 0)
         {
-           cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << "\t"
-                << tothormonediff << "\t" << maxhormonediff << "\t" << c << endl;
+            if (stdoutput)
+            {
+               std::cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << "\t"
+                    << tothormonediff << "\t" << maxhormonediff << "\t" << c << std::endl;
+            }
         }
     }
 
-    // Convergence done or maxI reached
-    cout << endl;
-    outputfile << endl;
+    if (stdoutput)
+    {
+        // Convergence done or maxI reached
+        std::cout << std::endl;
+    }
+   
+    outputfile << std::endl;
 
     // Print strategy & params
     PrintStrat();
