@@ -4,7 +4,7 @@ CPP_LH=stress_lh.cpp
 
 # compiler is gcc
 CXX=g++
-CXXFLAGS=-Wall  -O3 
+CXXFLAGS=-Wall -O3 -std=c++20
 
 all : $(EXE_LH)
 
