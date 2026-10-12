@@ -727,6 +727,7 @@ int main(int argc, char* argv[])
     FinalFit();
     Predator();
     Death();
+    Mortality();
     Reproduction();
     Damage();
 
