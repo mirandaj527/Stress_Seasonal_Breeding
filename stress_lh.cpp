@@ -28,7 +28,7 @@
 
 double lambdaA  = 0.035;   // probability that predator arrives
 double lambdaL  = 0.065;   // probability that predator leaves
-const double pAtt     = 0.5;     // probability that predator attacks if present
+double pAtt     = 0.5;     // probability that predator attacks if present
 double alpha    = 0.1;     // parameter controlling effect of hormone level on pKill
 const double beta_b   = 0.0;     // parameter controlling effect of hormone level on reproductive rate
 const double kappa    = 0.0;     // Parameter controlling affect of damage on mortality
@@ -673,6 +673,7 @@ int main(int argc, char* argv[])
 
         if      (arg.rfind("lambdaA=", 0) == 0)  { lambdaA   = std::stod(arg.substr(8)); }
         else if (arg.rfind("lambdaL=", 0) == 0)  { lambdaL   = std::stod(arg.substr(8)); }
+	else if (arg.rfind("pAtt=",    0) == 0)  { pAtt      = std::stod(arg.substr(5)); }
         else if (arg.rfind("alpha=",   0) == 0)  { alpha     = std::stod(arg.substr(6)); }
         else if (arg.rfind("mu=",      0) == 0)  { mu        = std::stod(arg.substr(3)); }
         else if (arg.rfind("rho=",     0) == 0)  { rho       = std::stod(arg.substr(4)); }
@@ -698,6 +699,7 @@ int main(int argc, char* argv[])
         std::cout << "Using parameters:\n";
         std::cout << "  lambdaA = " << lambdaA << "\n"
                   << "  lambdaL = " << lambdaL << "\n"
+		  << "  pAtt    = " << pAtt << "\n"
                   << "  alpha   = " << alpha << "\n"
                   << "  mu      = " << mu << "\n"
                   << "  rho     = " << rho << "\n"
