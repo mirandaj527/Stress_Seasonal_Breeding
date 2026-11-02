@@ -682,6 +682,7 @@ int main(int argc, char* argv[])
             stdoutput = static_cast<bool>(std::stoi(arg.substr(10)));
         }
         else if (arg.rfind("maxS=", 0) == 0) { maxS = std::stoi(arg.substr(5)); }
+		else if (arg.rfind("skip=", 0) == 0) { skip = std::stoi(arg.substr(5)); }
         else if (arg.rfind("dpFile=", 0) == 0) { dpOutputFilename = arg.substr(7); }
         else if (arg.rfind("simBase=", 0) == 0) { simOutputBase = arg.substr(8); }
         else
