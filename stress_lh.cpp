@@ -657,75 +657,77 @@ void SimAcutePhases(const std::string &base_name) // Simulating predator attack 
 int main(int argc, char* argv[])
 {
     // ----------------------------------------------------
-    // 1) Provide default filenames & parameters
-    //    for DP output and simulation base name
+    // 1) Default output filenames
     // ----------------------------------------------------
-    std::string dpOutputFilename = "stress.txt";  
-    std::string simOutputBase    = "Test";
+    std::string dpOutputFilename = "stress.txt";
+    std::string simOutputBase = "Test";
 
     // ----------------------------------------------------
-    // 2) Parse command-line arguments
-    //    e.g. "./Program lambdaA=0.04 dpFile=dpOut.txt simBase=MySim"
+    // 2) Read command-line arguments
     // ----------------------------------------------------
     for (int argIndex = 1; argIndex < argc; argIndex++)
     {
         std::string arg = argv[argIndex];
 
-        if      (arg.rfind("lambdaA=", 0) == 0)  { lambdaA   = std::stod(arg.substr(8)); }
-        else if (arg.rfind("lambdaL=", 0) == 0)  { lambdaL   = std::stod(arg.substr(8)); }
-	else if (arg.rfind("pAtt=",    0) == 0)  { pAtt      = std::stod(arg.substr(5)); }
-        else if (arg.rfind("alpha=",   0) == 0)  { alpha     = std::stod(arg.substr(6)); }
-        else if (arg.rfind("mu=",      0) == 0)  { mu        = std::stod(arg.substr(3)); }
-        else if (arg.rfind("rho=",     0) == 0)  { rho       = std::stod(arg.substr(4)); }
-        else if (arg.rfind("omega=",   0) == 0)  { omega     = std::stod(arg.substr(6)); }
-        else if (arg.rfind("gamma_g=", 0) == 0)  { gamma_g   = std::stod(arg.substr(8)); }
-        else if (arg.rfind("stdoutput=", 0) == 0)  { stdoutput = static_cast<bool>(std::stoi(arg.substr(10))); }
-        else if (arg.rfind("maxS=", 0) == 0)  { maxS = std::stoi(arg.substr(5)); }
-        // else if (arg.rfind("maxS=",    0) == 0)  { maxS      = std::stoi(arg.substr(5)); }
-        else if (arg.rfind("dpFile=",  0) == 0)  { dpOutputFilename = arg.substr(7); }
-        else if (arg.rfind("simBase=", 0) == 0)  { simOutputBase    = arg.substr(8); }
-        else {
+        if      (arg.rfind("lambdaA=", 0) == 0) { lambdaA = std::stod(arg.substr(8)); }
+        else if (arg.rfind("lambdaL=", 0) == 0) { lambdaL = std::stod(arg.substr(8)); }
+        else if (arg.rfind("pAtt=", 0) == 0) { pAtt = std::stod(arg.substr(5)); }
+        else if (arg.rfind("alpha=", 0) == 0) { alpha = std::stod(arg.substr(6)); }
+        else if (arg.rfind("mu=", 0) == 0) { mu = std::stod(arg.substr(3)); }
+        else if (arg.rfind("rho=", 0) == 0) { rho = std::stod(arg.substr(4)); }
+        else if (arg.rfind("omega=", 0) == 0) { omega = std::stod(arg.substr(6)); }
+        else if (arg.rfind("gamma_g=", 0) == 0) { gamma_g = std::stod(arg.substr(8)); }
+        else if (arg.rfind("stdoutput=", 0) == 0)
+        {
+            stdoutput = static_cast<bool>(std::stoi(arg.substr(10)));
+        }
+        else if (arg.rfind("maxS=", 0) == 0) { maxS = std::stoi(arg.substr(5)); }
+        else if (arg.rfind("dpFile=", 0) == 0) { dpOutputFilename = arg.substr(7); }
+        else if (arg.rfind("simBase=", 0) == 0) { simOutputBase = arg.substr(8); }
+        else
+        {
             std::cerr << "Unrecognized argument: " << arg << std::endl;
         }
     }
 
     // ----------------------------------------------------
-    // 3) Print out final parameter values 
-    //    so we know what's being used
+    // 3) Print selected parameters to the console
     // ----------------------------------------------------
-    
     if (stdoutput)
     {
         std::cout << "Using parameters:\n";
         std::cout << "  lambdaA = " << lambdaA << "\n"
                   << "  lambdaL = " << lambdaL << "\n"
-		  << "  pAtt    = " << pAtt << "\n"
+                  << "  pAtt    = " << pAtt << "\n"
                   << "  alpha   = " << alpha << "\n"
                   << "  mu      = " << mu << "\n"
                   << "  rho     = " << rho << "\n"
                   << "  omega   = " << omega << "\n"
                   << "  gamma_g = " << gamma_g << "\n"
                   << "  maxS    = " << maxS << "\n\n";
+
         std::cout << "DP output file: " << dpOutputFilename << "\n";
         std::cout << "Simulation base: " << simOutputBase << "\n\n";
     }
 
+    // ----------------------------------------------------
+    // 4) Prepare the DP model and its output file
+    // ----------------------------------------------------
     InitVectors();
-    // ----------------------------------------------------
-    // DP calculations to find optimal strat
-    // ----------------------------------------------------
+
     c = 0;
 
-    // For the DP output file:
+    // Default stopping reason; updated if a convergence criterion is met.
+    std::string convergence_reason = "iteration_limit";
+
     outfile.str("");
     outfile << dpOutputFilename;
     std::string outputfilename = outfile.str();
     outputfile.open(outputfilename.c_str());
 
-    // Write seed
     outputfile << "Random seed: " << seed << std::endl;
 
-    // Model init
+    // Model initialisation
     FinalFit();
     Predator();
     Death();
@@ -733,78 +735,129 @@ int main(int argc, char* argv[])
     Reproduction();
     Damage();
 
-    // DP iteration
+    // ----------------------------------------------------
+    // 5) DP iterations and console progress messages
+    // ----------------------------------------------------
     if (stdoutput)
     {
-        std::cout << "i" << "\t" << "totfitdiff" << "\t" << "maxfitdiff" << "\t"
-             << "tothormonediff" << "\t" << "maxhormonediff" << "\t" << "c" << std::endl;
+        std::cout << "i\t"
+                  << "totfitdiff\t"
+                  << "maxfitdiff\t"
+                  << "tothormonediff\t"
+                  << "maxhormonediff\t"
+                  << "c" << std::endl;
     }
 
-    for (i=1; i <= maxI; i++)
+    for (i = 1; i <= maxI; i++)
     {
         OptDec();
         ReplaceFit();
         ReplaceHormone();
 
-        if (maxfitdiff < 0.000001) 
-        {
-            if (stdoutput)
-            {
-               std::cout << "Converged at iteration: " << i 
-                    << ", maxfitdiff: " << maxfitdiff << std::endl;
-            }
-           break; // strategy has converged, so exit loop
-        }
-        if (i == maxI) 
-        { 
-           outputfile << "*** DID NOT CONVERGE WITHIN " << i << " ITERATIONS ***" << std::endl;
-        }
+        // Count consecutive iterations with an unchanged strategy.
         if (maxhormonediff == 0)
         {
-           c++;  // Increment counter if maxhormonediff is still 0
+            c++;
         }
         else
         {
-           c = 0;
+            c = 0;
         }
 
+        // First stopping criterion: sufficiently small fitness difference.
+        if (maxfitdiff < 0.000001)
+        {
+            convergence_reason = "fitness_tolerance";
+
+            if (stdoutput)
+            {
+                std::cout << "Converged at iteration: " << i
+                          << "\nCriterion: maxfitdiff < 0.000001"
+                          << "\nmaxfitdiff: " << maxfitdiff
+                          << ", consecutive unchanged strategy iterations (c): "
+                          << c << std::endl;
+            }
+
+            break;
+        }
+
+        // Second stopping criterion: unchanged strategy for 150 iterations.
         if (c >= 150)
         {
+            convergence_reason = "unchanged_strategy";
+
             if (stdoutput)
             {
-               std::cout << "Converged at iteration: " << i 
-                    << ", maxfitdiff: " << maxfitdiff << std::endl;
+                std::cout << "Stopped at iteration: " << i
+                          << "\nCriterion: c >= 150"
+                          << "\nmaxfitdiff: " << maxfitdiff
+                          << ", consecutive unchanged strategy iterations (c): "
+                          << c << std::endl;
             }
-           break; 
+
+            break;
         }
-        if (i % skip == 0)
+
+        // Stop at the iteration limit if neither criterion was met.
+        if (i == maxI)
         {
             if (stdoutput)
             {
-               std::cout << i << "\t" << totfitdiff << "\t" << maxfitdiff << "\t"
-                    << tothormonediff << "\t" << maxhormonediff << "\t" << c << std::endl;
+                std::cout << "Iteration limit reached: " << i
+                          << "\nNeither convergence criterion was met."
+                          << "\nmaxfitdiff: " << maxfitdiff
+                          << ", consecutive unchanged strategy iterations (c): "
+                          << c << std::endl;
             }
+
+            break;
+        }
+
+        // Print progress at the usual interval.
+        if (stdoutput && i % skip == 0)
+        {
+            std::cout << i << "\t"
+                      << totfitdiff << "\t"
+                      << maxfitdiff << "\t"
+                      << tothormonediff << "\t"
+                      << maxhormonediff << "\t"
+                      << c << std::endl;
         }
     }
 
     if (stdoutput)
     {
-        // Convergence done or maxI reached
         std::cout << std::endl;
     }
-   
+
+    // ----------------------------------------------------
+    // 6) Save strategy, convergence information, and parameters
+    // ----------------------------------------------------
     outputfile << std::endl;
 
-    // Print strategy & params
     PrintStrat();
+
+    outputfile << "convergence_reason\t" << convergence_reason << "\n"
+               << "final_iteration\t" << i << "\n"
+               << "final_maxfitdiff\t" << maxfitdiff << "\n"
+               << "consecutive_unchanged_strategy_iterations\t" << c << "\n";
+
+    if (convergence_reason == "iteration_limit")
+    {
+        outputfile << "*** DID NOT CONVERGE WITHIN "
+                   << i << " ITERATIONS ***\n";
+    }
+
+    outputfile << std::endl;
+
     PrintParams();
     outputfile.close();
 
     // ----------------------------------------------------
-    // 5) Finally, run the simulation 
-    //    passing simOutputBase to the function
+    // 7) Run the forward simulation
     // ----------------------------------------------------
     SimAcutePhases(simOutputBase);
 
     return 0;
 }
+
