@@ -32,7 +32,13 @@ basename_sim <- paste0(file_prefix, "_", formatted_time)
 
 ctr <- 0
 
-to_screen <- 0
+# to_screen 
+    # determines whether update messages print to the console while 
+    # models are running (0 = no, 1 = yes)
+# output_interval 
+    # determines the number of iterations between outputs
+to_screen <- 1
+output_interval <- 100
 
 exe <- "./stress_lh.exe"
 
@@ -62,6 +68,7 @@ for (risk_i in risk)
                                             "gamma_g=",gamma_g_i," ",
                                             "maxS=",maxS_i," ",
                                             "stdoutput=",to_screen," ",
+                                            "skip=",output_interval," ",
                                             "dpFile=",basename_dp,"_",ctr,".csv ",
                                             "simBase=",basename_sim,"_",ctr,".csv"))
                             ctr <- ctr + 1
