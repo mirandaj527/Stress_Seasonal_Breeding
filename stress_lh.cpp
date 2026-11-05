@@ -765,7 +765,7 @@ int main(int argc, char* argv[])
             c = 0;
         }
 
-        // First stopping criterion: sufficiently small fitness difference.
+        // Convergence criterion: sufficiently small fitness difference between iterations.
         if (maxfitdiff < 0.000001)
         {
             convergence_reason = "fitness_tolerance";
@@ -774,23 +774,6 @@ int main(int argc, char* argv[])
             {
                 std::cout << "Converged at iteration: " << i
                           << "\nCriterion: maxfitdiff < 0.000001"
-                          << "\nmaxfitdiff: " << maxfitdiff
-                          << ", consecutive unchanged strategy iterations (c): "
-                          << c << std::endl;
-            }
-
-            break;
-        }
-
-        // Second stopping criterion: unchanged strategy for 150 iterations.
-        if (c >= 150)
-        {
-            convergence_reason = "unchanged_strategy";
-
-            if (stdoutput)
-            {
-                std::cout << "Stopped at iteration: " << i
-                          << "\nCriterion: c >= 150"
                           << "\nmaxfitdiff: " << maxfitdiff
                           << ", consecutive unchanged strategy iterations (c): "
                           << c << std::endl;
